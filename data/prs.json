@@ -1,0 +1,67 @@
+[
+  {
+    "id": "PR-101",
+    "number": 101,
+    "title": "feat: add exponential backoff retry for payment gateway timeouts",
+    "author": "sarah.chen@northstar.internal",
+    "service": "svc-payment-gateway",
+    "status": "OPEN",
+    "branch": "feat/gateway-backoff-retry",
+    "base": "main",
+    "files_changed": [
+      "src/client/acquirer_client.py",
+      "src/config/retry_policy.py",
+      "tests/test_retry.py"
+    ],
+    "description": "Introduces configurable exponential backoff with full jitter for transient 502/504 errors from upstream acquirers. Caps maximum retries at 3 attempts with a 500ms max ceiling to prevent thread exhaustion during payment authorization spikes.",
+    "diff_summary": "+ class ExponentialBackoffPolicy:\n+     max_attempts: int = 3\n+     base_delay_ms: int = 100\n+     max_delay_ms: int = 500\n+     def get_delay(self, attempt: int) -> float: ...\n- def call_acquirer(payload):\n-     return http.post(payload, timeout=2.0)\n+ def call_acquirer_with_retry(payload):\n+     ... retry loop with idempotency key ..."
+  },
+  {
+    "id": "PR-102",
+    "number": 102,
+    "title": "fix: update fraud risk score threshold to reduce false positive challenges",
+    "author": "marcus.vance@northstar.internal",
+    "service": "svc-fraud",
+    "status": "OPEN",
+    "branch": "fix/risk-threshold-tuning",
+    "base": "main",
+    "files_changed": [
+      "src/rules/scoring_engine.py",
+      "config/thresholds.yaml"
+    ],
+    "description": "Adjusts the 3DS verification challenge threshold from 70 to 78 for low-ticket transactions (< $50) based on analysis from the Q3 fraud audit. Lowers cart abandonment by an estimated 4.2% while keeping fraud rate within the 0.05% margin.",
+    "diff_summary": "- CHALLENGE_THRESHOLD: 70\n+ CHALLENGE_THRESHOLD: 78\n+ LOW_VALUE_BASKET_THRESHOLD_USD: 50.0"
+  },
+  {
+    "id": "PR-103",
+    "number": 103,
+    "title": "refactor: optimize redis cache lookup in pricing-service",
+    "author": "elena.rostova@northstar.internal",
+    "service": "svc-pricing",
+    "status": "MERGED",
+    "branch": "perf/pricing-redis-pipeline",
+    "base": "main",
+    "files_changed": [
+      "src/cache/redis_client.py",
+      "src/pricing/engine.py"
+    ],
+    "description": "Batches individual item price queries into a single Redis MGET / pipeline operation. Reduces P99 pricing latency from 95ms down to 32ms during multi-item cart calculation.",
+    "diff_summary": "- for item in cart.items:\n-     price = redis.get(item.sku)\n+ skus = [item.sku for item in cart.items]\n+ prices = redis.mget(skus)"
+  },
+  {
+    "id": "PR-104",
+    "number": 104,
+    "title": "chore: update checkout-api docker base image and fix security CVE-2024-38875",
+    "author": "devin.lee@northstar.internal",
+    "service": "svc-checkout-api",
+    "status": "OPEN",
+    "branch": "chore/cve-base-image-bump",
+    "base": "main",
+    "files_changed": [
+      "Dockerfile",
+      "requirements.lock"
+    ],
+    "description": "Bumps base image from python:3.11-slim to python:3.11.9-slim-bookworm to resolve CVE-2024-38875 in libxml2. Tested on staging environment without regressions.",
+    "diff_summary": "- FROM python:3.11-slim\n+ FROM python:3.11.9-slim-bookworm\n- cryptography==42.0.4\n+ cryptography==42.0.8"
+  }
+]

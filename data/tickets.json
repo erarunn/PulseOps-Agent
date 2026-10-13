@@ -1,0 +1,62 @@
+[
+  {
+    "id": "INC-401",
+    "title": "Elevated 504 Gateway Timeouts in Checkout API during flash sale",
+    "service_id": "svc-checkout-api",
+    "severity": "P1",
+    "status": "RESOLVED",
+    "team": "payments",
+    "description": "During the autumn flash sale, checkout-api experienced a 4.2% rate of HTTP 504 timeouts due to upstream latency spikes in the legacy acquirer endpoint. Resolved by enabling retry circuit breakers and scaling replica pods from 6 to 14.",
+    "created_at": "2026-09-14T14:22:00Z"
+  },
+  {
+    "id": "INC-402",
+    "title": "Fraud scoring latency spike (>450ms) affecting checkout completion",
+    "service_id": "svc-fraud",
+    "severity": "P2",
+    "status": "INVESTIGATING",
+    "team": "risk-engineering",
+    "description": "P99 latency on /v1/evaluate-risk breached 450ms (SLO target is 200ms). Root cause suspected to be an unindexed database query on device fingerprint lookup tables.",
+    "created_at": "2026-10-08T09:15:00Z"
+  },
+  {
+    "id": "INC-403",
+    "title": "Stale price cache reported for international currency conversions",
+    "service_id": "svc-pricing",
+    "severity": "P2",
+    "status": "RESOLVED",
+    "team": "core-platform",
+    "description": "EUR and GBP prices failed to invalidate after midnight exchange rate sync. Caused discrepancies of ~0.3% on order subtotals for 45 minutes until cache flush.",
+    "created_at": "2026-10-01T01:30:00Z"
+  },
+  {
+    "id": "TCK-201",
+    "title": "Upgrade redis cluster memory limits in staging and prod",
+    "service_id": "svc-pricing",
+    "severity": "P3",
+    "status": "IN_PROGRESS",
+    "team": "core-platform",
+    "description": "Increase Redis instance size from cache.m5.large to cache.m6g.xlarge to support higher TTL on multi-region product catalog items.",
+    "created_at": "2026-10-05T11:00:00Z"
+  },
+  {
+    "id": "TCK-202",
+    "title": "Implement OpenTelemetry traces across payment-gateway-adapter",
+    "service_id": "svc-payment-gateway",
+    "severity": "P3",
+    "status": "BACKLOG",
+    "team": "payments",
+    "description": "Inject baggage headers for w3c traceparent to correlate payment auth attempts with downstream acquirer gateway logs.",
+    "created_at": "2026-09-28T16:45:00Z"
+  },
+  {
+    "id": "TCK-203",
+    "title": "Review missing runbook coverage for payment notification fallback",
+    "service_id": "svc-notification-worker",
+    "severity": "P4",
+    "status": "OPEN",
+    "team": "customer-comms",
+    "description": "Onboarding doc and emergency runbook do not cover dead letter queue (DLQ) replay procedures when Kafka consumer groups rebalance.",
+    "created_at": "2026-10-09T18:20:00Z"
+  }
+]

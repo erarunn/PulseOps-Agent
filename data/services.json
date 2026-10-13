@@ -1,0 +1,74 @@
+[
+  {
+    "id": "svc-checkout-api",
+    "name": "checkout-api",
+    "team": "payments",
+    "repo": "northstar/checkout-api",
+    "slo_availability": 99.9,
+    "slo_latency_p99_ms": 350,
+    "tier": "Tier-1",
+    "depends_on": ["svc-pricing", "svc-fraud", "svc-payment-gateway"],
+    "oncall": "payments-oncall",
+    "description": "Core orchestration API serving web and mobile checkout flows, coordinating pricing, fraud checks, and payment authorization."
+  },
+  {
+    "id": "svc-pricing",
+    "name": "pricing-service",
+    "team": "core-platform",
+    "repo": "northstar/pricing-service",
+    "slo_availability": 99.95,
+    "slo_latency_p99_ms": 120,
+    "tier": "Tier-1",
+    "depends_on": ["svc-order-db-proxy"],
+    "oncall": "platform-oncall",
+    "description": "Computes real-time cart pricing, promotions, currency conversions, and taxes with Redis L1 caching."
+  },
+  {
+    "id": "svc-fraud",
+    "name": "fraud-service",
+    "team": "risk-engineering",
+    "repo": "northstar/fraud-service",
+    "slo_availability": 99.9,
+    "slo_latency_p99_ms": 200,
+    "tier": "Tier-1",
+    "depends_on": [],
+    "oncall": "risk-oncall",
+    "description": "Calculates real-time transaction risk scores (0-100) using ML models and velocity rule evaluation."
+  },
+  {
+    "id": "svc-payment-gateway",
+    "name": "payment-gateway-adapter",
+    "team": "payments",
+    "repo": "northstar/payment-gateway-adapter",
+    "slo_availability": 99.99,
+    "slo_latency_p99_ms": 800,
+    "tier": "Tier-1",
+    "depends_on": [],
+    "oncall": "payments-oncall",
+    "description": "Translates internal payment capture/authorization calls to external acquirers (Stripe, Adyen) with idempotent request keys."
+  },
+  {
+    "id": "svc-order-db-proxy",
+    "name": "order-db-proxy",
+    "team": "data-infra",
+    "repo": "northstar/order-db-proxy",
+    "slo_availability": 99.99,
+    "slo_latency_p99_ms": 50,
+    "tier": "Tier-0",
+    "depends_on": [],
+    "oncall": "dataplatform-oncall",
+    "description": "Connection pooler and sharding router in front of PostgreSQL order clusters."
+  },
+  {
+    "id": "svc-notification-worker",
+    "name": "notification-worker",
+    "team": "customer-comms",
+    "repo": "northstar/notification-worker",
+    "slo_availability": 99.5,
+    "slo_latency_p99_ms": 1500,
+    "tier": "Tier-2",
+    "depends_on": ["svc-order-db-proxy"],
+    "oncall": "comms-oncall",
+    "description": "Asynchronous consumer processing order receipt emails and SMS confirmations via Kafka topics."
+  }
+]

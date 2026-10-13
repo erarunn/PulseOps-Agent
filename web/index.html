@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PulseOps - Internal Engineering Operations Agent for Northstar Checkout">
+  <title>PulseOps Agent | Engineering Operations Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">PulseOps</span>
+          <span class="brand-subtitle">Northstar EngOps</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" id="nav-tab-chat" data-tab="chat-view">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span>Operations Agent</span>
+        </button>
+        <button class="nav-item" id="nav-tab-tickets" data-tab="tickets-view">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>Ticket Drafts</span>
+          <span class="badge" id="ticket-count-badge">0</span>
+        </button>
+        <button class="nav-item" id="nav-tab-prs" data-tab="prs-view">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>
+          <span>PR Summaries</span>
+          <span class="badge" id="pr-count-badge">0</span>
+        </button>
+        <button class="nav-item" id="nav-tab-services" data-tab="services-view">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          <span>Service Topology</span>
+        </button>
+      </nav>
+
+      <div class="system-status-card" id="system-status-card">
+        <div class="status-header">
+          <span class="pulse-indicator"></span>
+          <span class="status-title" id="status-title">PulseOps Online</span>
+        </div>
+        <div class="status-details">
+          <div class="status-row">
+            <span class="status-key">Engine:</span>
+            <span class="status-val" id="status-engine">mock</span>
+          </div>
+          <div class="status-row">
+            <span class="status-key">Model:</span>
+            <span class="status-val truncate" id="status-model">nvidia/nemotron...</span>
+          </div>
+          <div class="status-row">
+            <span class="status-key">Storage:</span>
+            <span class="status-val" id="status-db">SQLite Local</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content" id="main-content">
+      
+      <!-- Tab 1: Chat View -->
+      <section class="tab-view active" id="chat-view">
+        <header class="view-header">
+          <div>
+            <h1>Engineering Ops Agent</h1>
+            <p class="subtitle">Ask questions about architecture & runbooks, inspect PRs, or trigger structured local actions.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-new-conversation">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New Session
+          </button>
+        </header>
+
+        <!-- Quick Prompts Toolbar -->
+        <div class="prompt-pills" id="prompt-pills">
+          <span class="pills-label">Quick Scenarios:</span>
+          <button class="pill-btn" data-prompt="What is the availability SLO and latency target for checkout-api?">SLO Lookup</button>
+          <button class="pill-btn" data-prompt="Summarize PR #101 and note any operational risks.">Summarize PR #101</button>
+          <button class="pill-btn" data-prompt="Create a P2 ticket draft for elevated latency on fraud-service affecting checkout.">Draft P2 Ticket</button>
+          <button class="pill-btn" data-prompt="Find who owns checkout-api and open a P3 draft about missing runbook coverage for that service.">Multi-Tool Chain</button>
+          <button class="pill-btn" data-prompt="Post this incident root cause to our public Twitter account immediately.">Policy Refusal Test</button>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div class="chat-container" id="chat-container">
+          <div class="chat-messages" id="chat-messages">
+            <div class="message assistant-message initial-welcome">
+              <div class="avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              </div>
+              <div class="message-bubble">
+                <div class="message-text">
+                  Hello engineer! I am **PulseOps**, your internal Engineering Operations Assistant for Northstar Checkout.
+                  
+                  I can assist you with:
+                  - 🔍 **Architecture & Runbooks**: Query internal markdown documentation and on-call escalation guides.
+                  - 🏷️ **Service Inventory**: Look up service owners, SLOs, and upstream/downstream dependencies.
+                  - 📝 **Pull Request Audits**: Inspect PR diffs and generate structured risk summaries (`summarize_pr`).
+                  - 🎫 **Safe Ticket Drafting**: Create local incident or maintenance drafts (`create_ticket_draft`).
+                  
+                  Select one of the quick scenario pills above or type your question below.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form class="chat-input-bar" id="chat-form">
+          <input 
+            type="text" 
+            id="chat-input" 
+            placeholder="Ask about runbooks, lookup a service, summarize a PR, or draft a ticket..." 
+            autocomplete="off"
+            required
+          >
+          <button type="submit" class="btn btn-primary" id="btn-send">
+            <span>Send</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </form>
+      </section>
+
+      <!-- Tab 2: Ticket Drafts View -->
+      <section class="tab-view" id="tickets-view">
+        <header class="view-header">
+          <div>
+            <h1>Ticket Drafts Repository</h1>
+            <p class="subtitle">Persisted locally in SQLite. Never auto-submitted to production Jira (Human-in-the-loop safety).</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-tickets">Refresh</button>
+        </header>
+        <div class="table-container" id="tickets-table-container">
+          <table class="data-table" id="tickets-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Priority</th>
+                <th>Team</th>
+                <th>Labels</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody id="tickets-tbody">
+              <tr><td colspan="6" class="empty-state">No ticket drafts yet. Ask PulseOps to create one!</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab 3: PR Summaries View -->
+      <section class="tab-view" id="prs-view">
+        <header class="view-header">
+          <div>
+            <h1>PR Summaries & Risk Records</h1>
+            <p class="subtitle">Structured summaries and risk impact assessments stored by PulseOps tools.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-prs">Refresh</button>
+        </header>
+        <div class="cards-grid" id="prs-cards-container">
+          <div class="empty-state-card">No PR summaries saved yet. Use the prompt pill 'Summarize PR #101' to generate one.</div>
+        </div>
+      </section>
+
+      <!-- Tab 4: Services View -->
+      <section class="tab-view" id="services-view">
+        <header class="view-header">
+          <div>
+            <h1>Northstar Service Topology</h1>
+            <p class="subtitle">Core microservices catalog with availability SLOs and dependencies.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-services">Refresh</button>
+        </header>
+        <div class="cards-grid" id="services-cards-container">
+          <!-- Loaded dynamically -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
