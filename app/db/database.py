@@ -57,5 +57,18 @@ def init_db():
             source_conversation_id TEXT,
             created_at TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS doc_chunks (
+            id TEXT PRIMARY KEY,
+            filename TEXT NOT NULL,
+            title TEXT NOT NULL,
+            chunk_index INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            file_fingerprint TEXT NOT NULL,
+            indexed_at TEXT NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_doc_chunks_filename
+            ON doc_chunks(filename);
         """)
     conn.close()

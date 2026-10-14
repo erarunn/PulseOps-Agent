@@ -5,6 +5,7 @@ from pydantic import BaseModel
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 DOCS_DIR = DATA_DIR / "docs"
+CHROMA_DIR = DATA_DIR / "chroma_store"
 
 def _load_dotenv():
     """Minimal .env loader — reads KEY=VALUE lines from .env in project root."""
@@ -36,12 +37,28 @@ class Settings(BaseModel):
     
     # Database
     db_path: Path = BASE_DIR / "pulseops.db"
-    
+
+    # Vector store (ChromaDB) — persists embeddings across restarts
+    chroma_persist_dir: Path = CHROMA_DIR
+
+    # Embedding model (via OpenRouter)
+    openrouter_embed_model: str = os.getenv(
+        "OPENROUTER_EMBED_MODEL", "nvidia/llama-nemotron-embed-vl-1b-v2:free"
+    )
+
+    # Hybrid retrieval weights (keyword + vector; must sum to 1.0)
+    hybrid_keyword_weight: float = float(os.getenv("HYBRID_KEYWORD_WEIGHT", "0.4"))
+    hybrid_vector_weight: float = float(os.getenv("HYBRID_VECTOR_WEIGHT", "0.6"))
+
+    # Chunking knobs
+    chunk_max_chars: int = int(os.getenv("CHUNK_MAX_CHARS", "600"))
+    chunk_overlap_chars: int = int(os.getenv("CHUNK_OVERLAP_CHARS", "100"))
+
     # App
     host: str = os.getenv("HOST", "127.0.0.1")
     port: int = int(os.getenv("PORT", "8000"))
     debug: bool = os.getenv("DEBUG", "false").lower() == "true"
-    
+
     # Agent execution limits
     max_agent_steps: int = 5
 

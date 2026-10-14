@@ -160,7 +160,7 @@ def execute_tool(
         if name == "search_docs":
             return search_docs(
                 query=arguments.get("query", ""),
-                max_results=arguments.get("max_results", 3)
+                max_results=arguments.get("max_results", 5)
             )
         elif name == "get_service":
             return get_service(name_or_id=arguments.get("name_or_id", ""))

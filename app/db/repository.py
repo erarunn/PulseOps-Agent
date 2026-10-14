@@ -9,6 +9,7 @@ from app.db.models import (
     TicketDraftModel,
     PRSummaryModel,
     ConversationDetail,
+    DocChunkModel,
 )
 
 def utc_now() -> str:
@@ -262,3 +263,126 @@ class Repository:
             messages=messages,
             traces=traces
         )
+
+
+class DocChunkRepository:
+    """Persists and queries doc chunk metadata in SQLite (doc_chunks table).
+
+    The actual dense vectors are stored in ChromaDB; this table acts as a
+    lightweight audit log and fast metadata lookup store.
+    """
+
+    @staticmethod
+    def upsert_chunks(
+        chunks: List[Dict[str, Any]],
+        file_fingerprints: Dict[str, str],
+    ) -> List[DocChunkModel]:
+        """Delete existing chunks for changed files and insert fresh ones.
+
+        Args:
+            chunks: List of chunk dicts with keys: id, filename, title,
+                    chunk_index, text.
+            file_fingerprints: Map of filename → SHA-256 so we can record
+                               which file version each chunk came from.
+        Returns:
+            List of persisted DocChunkModel instances.
+        """
+        if not chunks:
+            return []
+
+        indexed_at = utc_now()
+        conn = get_connection()
+        filenames = list({c["filename"] for c in chunks})
+
+        with conn:
+            # Remove stale rows for the affected filenames
+            placeholders = ",".join("?" for _ in filenames)
+            conn.execute(
+                f"DELETE FROM doc_chunks WHERE filename IN ({placeholders})",
+                filenames,
+            )
+            # Bulk insert new chunks
+            conn.executemany(
+                """
+                INSERT INTO doc_chunks
+                    (id, filename, title, chunk_index, text, file_fingerprint, indexed_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        c["id"],
+                        c["filename"],
+                        c["title"],
+                        c["chunk_index"],
+                        c["text"],
+                        file_fingerprints.get(c["filename"], ""),
+                        indexed_at,
+                    )
+                    for c in chunks
+                ],
+            )
+        conn.close()
+
+        return [
+            DocChunkModel(
+                id=c["id"],
+                filename=c["filename"],
+                title=c["title"],
+                chunk_index=c["chunk_index"],
+                text=c["text"],
+                file_fingerprint=file_fingerprints.get(c["filename"], ""),
+                indexed_at=indexed_at,
+            )
+            for c in chunks
+        ]
+
+    @staticmethod
+    def get_chunks_by_filename(filename: str) -> List[DocChunkModel]:
+        """Return all stored chunks for a given source file, ordered by index."""
+        conn = get_connection()
+        cursor = conn.execute(
+            """
+            SELECT id, filename, title, chunk_index, text, file_fingerprint, indexed_at
+            FROM doc_chunks
+            WHERE filename = ?
+            ORDER BY chunk_index ASC
+            """,
+            (filename,),
+        )
+        rows = cursor.fetchall()
+        conn.close()
+        return [
+            DocChunkModel(
+                id=r["id"],
+                filename=r["filename"],
+                title=r["title"],
+                chunk_index=r["chunk_index"],
+                text=r["text"],
+                file_fingerprint=r["file_fingerprint"],
+                indexed_at=r["indexed_at"],
+            )
+            for r in rows
+        ]
+
+    @staticmethod
+    def list_indexed_files() -> List[Dict[str, Any]]:
+        """Return a summary row per indexed file (filename, chunk_count, indexed_at)."""
+        conn = get_connection()
+        cursor = conn.execute(
+            """
+            SELECT filename, COUNT(*) AS chunk_count, MAX(indexed_at) AS indexed_at
+            FROM doc_chunks
+            GROUP BY filename
+            ORDER BY filename ASC
+            """
+        )
+        rows = cursor.fetchall()
+        conn.close()
+        return [
+            {
+                "filename": r["filename"],
+                "chunk_count": r["chunk_count"],
+                "indexed_at": r["indexed_at"],
+            }
+            for r in rows
+        ]

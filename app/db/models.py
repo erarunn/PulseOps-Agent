@@ -41,3 +41,13 @@ class ConversationDetail(BaseModel):
     user_label: Optional[str] = None
     messages: List[MessageModel] = []
     traces: List[ToolTraceModel] = []
+
+
+class DocChunkModel(BaseModel):
+    id: str
+    filename: str
+    title: str
+    chunk_index: int
+    text: str
+    file_fingerprint: str
+    indexed_at: str
