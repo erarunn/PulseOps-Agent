@@ -290,6 +290,33 @@ class MockLLMClient:
         return LLMResponse(content=f"Operation completed. Result summary: {json.dumps(tool_data)[:250]}")
 
 
+def _strip_null_tool_args(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Drop null tool-call arguments so providers that reject null vs string do not 400 on history."""
+    cleaned: List[Dict[str, Any]] = []
+    for message in messages:
+        item = dict(message)
+        tool_calls = item.get("tool_calls")
+        if not tool_calls:
+            cleaned.append(item)
+            continue
+        rewritten = []
+        for tc in tool_calls:
+            tc = dict(tc)
+            fn = dict(tc.get("function") or {})
+            raw_args = fn.get("arguments", "{}")
+            try:
+                parsed = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
+            except Exception:
+                parsed = None
+            if isinstance(parsed, dict):
+                fn["arguments"] = json.dumps({k: v for k, v in parsed.items() if v is not None})
+                tc["function"] = fn
+            rewritten.append(tc)
+        item["tool_calls"] = rewritten
+        cleaned.append(item)
+    return cleaned
+
+
 class LiveLLMClient:
     """Connects to OpenRouter or OpenAI-compatible endpoint with function calling support."""
     def __init__(self):
@@ -313,7 +340,7 @@ class LiveLLMClient:
 
         payload = {
             "model": self.model,
-            "messages": messages,
+            "messages": _strip_null_tool_args(messages),
             "temperature": 0.1
         }
         # Only include tools if we have them

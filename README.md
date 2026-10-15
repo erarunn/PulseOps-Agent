@@ -37,6 +37,9 @@ python evals/run_evals.py
 
 ## Architecture Overview
 
+Agent control flow (ReAct loop, max 5 LLM rounds): see [AGENT_GRAPH.md](AGENT_GRAPH.md).
+
+
 ```
 pulseops/
 ├── app/

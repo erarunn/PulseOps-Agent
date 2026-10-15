@@ -18,7 +18,7 @@ TOOL_DEFINITIONS = [
                         "description": "Keywords or search phrase to look up in documentation (e.g. 'checkout-api 504 timeout', 'oncall schedule', 'circuit breaker')."
                     },
                     "max_results": {
-                        "type": "integer",
+                        "type": ["integer", "null"],
                         "description": "Maximum number of documentation matching snippets to return.",
                         "default": 3
                     }
@@ -94,12 +94,12 @@ TOOL_DEFINITIONS = [
                         "description": "Priority severity level (P1 = critical outage, P2 = high degradation, P3 = medium, P4 = low/task)."
                     },
                     "labels": {
-                        "type": "array",
+                        "type": ["array", "null"],
                         "items": {"type": "string"},
                         "description": "Optional categorization tags (e.g. ['checkout', 'latency', 'oncall'])."
                     },
                     "team": {
-                        "type": "string",
+                        "type": ["string", "null"],
                         "description": "Suggested owner team (e.g. 'payments', 'core-platform', 'risk-engineering')."
                     }
                 },
@@ -120,7 +120,7 @@ TOOL_DEFINITIONS = [
                         "description": "The pull request number to summarize (e.g. 101, 102)."
                     },
                     "focus_areas": {
-                        "type": "string",
+                        "type": ["string", "null"],
                         "description": "Optional specific architectural concerns or risk vectors to highlight."
                     }
                 },
@@ -137,12 +137,12 @@ TOOL_DEFINITIONS = [
                 "type": "object",
                 "properties": {
                     "status": {
-                        "type": "string",
-                        "description": "Optional filter: 'RESOLVED', 'INVESTIGATING', 'OPEN', 'IN_PROGRESS', 'BACKLOG'."
+                        "type": ["string", "null"],
+                        "description": "Optional filter: 'RESOLVED', 'INVESTIGATING', 'OPEN', 'IN_PROGRESS', 'BACKLOG'. Omit or pass null to return all statuses."
                     },
                     "severity": {
-                        "type": "string",
-                        "description": "Optional filter: 'P1', 'P2', 'P3', 'P4'."
+                        "type": ["string", "null"],
+                        "description": "Optional filter: 'P1', 'P2', 'P3', 'P4'. Omit or pass null to return all severities."
                     }
                 }
             }
@@ -159,34 +159,34 @@ def execute_tool(
     try:
         if name == "search_docs":
             return search_docs(
-                query=arguments.get("query", ""),
-                max_results=arguments.get("max_results", 5)
+                query=arguments.get("query") or "",
+                max_results=arguments.get("max_results") or 5
             )
         elif name == "get_service":
-            return get_service(name_or_id=arguments.get("name_or_id", ""))
+            return get_service(name_or_id=arguments.get("name_or_id") or "")
         elif name == "list_open_prs":
             return list_open_prs()
         elif name == "get_pr":
-            return get_pr(pr_number=int(arguments.get("pr_number", 0)))
+            return get_pr(pr_number=int(arguments.get("pr_number") or 0))
         elif name == "create_ticket_draft":
             return create_ticket_draft(
-                title=arguments.get("title", ""),
-                description=arguments.get("description", ""),
-                priority=arguments.get("priority", "P3"),
-                labels=arguments.get("labels", []),
-                team=arguments.get("team", ""),
+                title=arguments.get("title") or "",
+                description=arguments.get("description") or "",
+                priority=arguments.get("priority") or "P3",
+                labels=arguments.get("labels") or [],
+                team=arguments.get("team") or "",
                 source_conversation_id=source_conversation_id
             )
         elif name == "summarize_pr":
             return summarize_pr(
-                pr_number=int(arguments.get("pr_number", 0)),
-                focus_areas=arguments.get("focus_areas", ""),
+                pr_number=int(arguments.get("pr_number") or 0),
+                focus_areas=arguments.get("focus_areas") or "",
                 source_conversation_id=source_conversation_id
             )
         elif name == "list_tickets":
             return list_tickets(
-                status=arguments.get("status", ""),
-                severity=arguments.get("severity", "")
+                status=arguments.get("status") or "",
+                severity=arguments.get("severity") or ""
             )
         else:
             return {"error": f"Unknown tool '{name}'."}

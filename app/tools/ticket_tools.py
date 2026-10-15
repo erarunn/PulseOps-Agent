@@ -11,7 +11,7 @@ def get_tickets_catalog() -> List[Dict[str, Any]]:
     with open(tickets_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def list_tickets(status: str = "", severity: str = "") -> Dict[str, Any]:
+def list_tickets(status: Optional[str] = "", severity: Optional[str] = "") -> Dict[str, Any]:
     """List sample engineering tickets or incidents with optional filters."""
     tickets = get_tickets_catalog()
     results = tickets

@@ -21,7 +21,7 @@ Build a lightweight Engineering Operations Agent that:
 - A hand-rolled loop is simpler to audit, trace, and extend — critical for a security-sensitive internal tool.
 - Explicit step cap (`max_agent_steps=5`) prevents infinite reasoning loops.
 
-**Loop flow**:
+**Loop flow** (full diagram: [AGENT_GRAPH.md](AGENT_GRAPH.md)):
 ```
 User Prompt
   -> Build context (system prompt + history)
